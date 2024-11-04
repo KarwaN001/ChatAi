@@ -1,0 +1,231 @@
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
+    content: {
+        flex: 1,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        paddingTop: 50,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        position: 'relative',
+    },
+    menuButton: {
+        padding: 8,
+    },
+    headerTitle: {
+        flex: 1,
+        fontSize: 22,
+        fontWeight: '600',
+        marginLeft: 16,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    historyModal: {
+        width: '90%',
+        maxHeight: '80%',
+        borderRadius: 20,
+        padding: 20,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    historyTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginBottom: 20,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingTop: 100,
+    },
+    emptyText: {
+        marginTop: 16,
+        fontSize: 16,
+        textAlign: 'center',
+    },
+    chatContainer: {
+        flex: 1,
+    },
+    chatContent: {
+        padding: 16,
+    },
+    emptyContentContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    messageContainer: {
+        maxWidth: '75%',
+        padding: 12,
+        paddingHorizontal: 16,
+        borderRadius: 16,
+        marginBottom: 16,
+        marginHorizontal: 10,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 1
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 1,
+        elevation: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+    },
+    userMessage: {
+        alignSelf: 'flex-end',
+        borderBottomRightRadius: 4,
+        marginLeft: 45,
+        backgroundColor: '#FF9933',
+    },
+    aiMessage: {
+        alignSelf: 'flex-start',
+        borderBottomLeftRadius: 4,
+        marginRight: 45,
+    },
+    messageText: {
+        fontSize: 15.5,
+        lineHeight: 21,
+        flexShrink: 1,
+    },
+    inputContainer: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        flexDirection: 'row',
+        padding: 16,
+        alignItems: 'center',
+    },
+    input: {
+        flex: 1,
+        borderRadius: 20,
+        padding: 12,
+        marginRight: 8,
+        maxHeight: 100,
+        minHeight: 40,
+    },
+    sendButton: {
+        padding: 12,
+        borderRadius: 25,
+    },
+    languageButton: {
+        padding: 8,
+        position: 'absolute',
+        right: 16,
+    },
+    languageModal: {
+        width: '80%',
+        maxHeight: '60%',
+        borderRadius: 20,
+        padding: 20,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    languageItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+    },
+    robotIcon: {
+        marginBottom: 20,
+        opacity: 0.9,
+    },
+    messageIcon: {
+        marginRight: 8,
+        opacity: 0.9,
+        size: 20,
+    },
+    typingIndicator: {
+        padding: 10,
+        paddingHorizontal: 14,
+        borderRadius: 16,
+        marginLeft: 10,
+        marginBottom: 16,
+        maxWidth: '50%',
+        alignSelf: 'flex-start',
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderBottomLeftRadius: 4,
+    },
+    emptyStateContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+    },
+    emptyStateIcon: {
+        marginBottom: 24,
+        opacity: 0.9,
+    },
+    emptyStateTitle: {
+        fontSize: 24,
+        fontWeight: '600',
+        marginBottom: 12,
+        textAlign: 'center',
+        color: '#FF9933',
+    },
+    emptyStateSubtitle: {
+        fontSize: 16,
+        textAlign: 'center',
+        opacity: 0.8,
+        lineHeight: 22,
+    },
+    errorMessage: {
+        borderWidth: 1,
+        borderColor: '#ef5350',
+    },
+    themeToggle: {
+        position: 'absolute',
+        right: 16,
+        top: 45,
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+    },
+    themeToggleIcon: {
+        width: 50,
+        height: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+}); 
