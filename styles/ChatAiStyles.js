@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export const styles = StyleSheet.create({
     container: {
@@ -29,9 +29,17 @@ export const styles = StyleSheet.create({
     },
     headerTitle: {
         flex: 1,
-        fontSize: 22,
+        fontSize: Platform.OS === 'ios' ? 22 : 20,
         fontWeight: '600',
         marginLeft: 16,
+        ...Platform.select({
+            ios: {
+                fontSize: Platform.isPad ? 26 : 22,
+            },
+            android: {
+                fontSize: Platform.isPad ? 24 : 20,
+            },
+        }),
     },
     modalOverlay: {
         flex: 1,
@@ -39,111 +47,30 @@ export const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    historyModal: {
-        width: '90%',
-        maxHeight: '80%',
-        borderRadius: 20,
-        padding: 20,
-        elevation: 5,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingBottom: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+        marginBottom: 15,
     },
-    historyTitle: {
-        fontSize: 24,
+    modalTitle: {
+        fontSize: Platform.OS === 'ios' ? 20 : 18,
         fontWeight: 'bold',
-        marginBottom: 20,
-    },
-    emptyContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingTop: 100,
-    },
-    emptyText: {
-        marginTop: 16,
-        fontSize: 16,
-        textAlign: 'center',
-    },
-    chatContainer: {
-        flex: 1,
-    },
-    chatContent: {
-        padding: 16,
-    },
-    emptyContentContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    messageContainer: {
-        maxWidth: '75%',
-        padding: 12,
-        paddingHorizontal: 16,
-        borderRadius: 16,
-        marginBottom: 16,
-        marginHorizontal: 10,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 1
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 1,
-        elevation: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        alignSelf: 'flex-start',
-    },
-    userMessage: {
-        alignSelf: 'flex-end',
-        borderBottomRightRadius: 4,
-        marginLeft: 45,
-        backgroundColor: '#FF9933',
-    },
-    aiMessage: {
-        alignSelf: 'flex-start',
-        borderBottomLeftRadius: 4,
-        marginRight: 45,
-    },
-    messageText: {
-        fontSize: 15.5,
-        lineHeight: 21,
-        flexShrink: 1,
-    },
-    inputContainer: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        flexDirection: 'row',
-        padding: 16,
-        alignItems: 'center',
-    },
-    input: {
-        flex: 1,
-        borderRadius: 20,
-        padding: 12,
-        marginRight: 8,
-        maxHeight: 100,
-        minHeight: 40,
-    },
-    sendButton: {
-        padding: 12,
-        borderRadius: 25,
-    },
-    languageButton: {
-        padding: 8,
-        position: 'absolute',
-        right: 16,
+        ...Platform.select({
+            ios: {
+                fontSize: Platform.isPad ? 24 : 20,
+            },
+            android: {
+                fontSize: Platform.isPad ? 22 : 18,
+            },
+        }),
     },
     languageModal: {
         width: '80%',
-        maxHeight: '60%',
+        backgroundColor: '#fff',
         borderRadius: 20,
         padding: 20,
         elevation: 5,
@@ -161,16 +88,56 @@ export const styles = StyleSheet.create({
         justifyContent: 'space-between',
         padding: 15,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+        marginBottom: 5,
+    },
+    languageItemContent: {
+        flex: 1,
+    },
+    languageName: {
+        fontSize: Platform.OS === 'ios' ? 16 : 15,
+        fontWeight: '500',
+        marginBottom: 4,
+        ...Platform.select({
+            ios: {
+                fontSize: Platform.isPad ? 18 : 16,
+            },
+            android: {
+                fontSize: Platform.isPad ? 17 : 15,
+            },
+        }),
+    },
+    nativeName: {
+        fontSize: Platform.OS === 'ios' ? 14 : 13,
+        ...Platform.select({
+            ios: {
+                fontSize: Platform.isPad ? 16 : 14,
+            },
+            android: {
+                fontSize: Platform.isPad ? 15 : 13,
+            },
+        }),
+    },
+    selectedLanguageItem: {
+        backgroundColor: 'rgba(255, 153, 51, 0.1)',
     },
     robotIcon: {
         marginBottom: 20,
         opacity: 0.9,
     },
     messageIcon: {
-        marginRight: 8,
-        opacity: 0.9,
-        size: 20,
+        width: Platform.OS === 'ios' ? 30 : 26,
+        height: Platform.OS === 'ios' ? 30 : 26,
+        marginRight: 14,
+        ...Platform.select({
+            ios: {
+                width: Platform.isPad ? 34 : 30,
+                height: Platform.isPad ? 34 : 30,
+            },
+            android: {
+                width: Platform.isPad ? 30 : 26,
+                height: Platform.isPad ? 30 : 26,
+            },
+        }),
     },
     typingIndicator: {
         padding: 10,
@@ -191,21 +158,39 @@ export const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     emptyStateIcon: {
-        marginBottom: 24,
-        opacity: 0.9,
+        width: 120,
+        height: 120,
+        marginBottom: 20,
     },
     emptyStateTitle: {
-        fontSize: 24,
+        fontSize: Platform.OS === 'ios' ? 24 : 22,
         fontWeight: '600',
         marginBottom: 12,
         textAlign: 'center',
-        color: '#FF9933',
+        ...Platform.select({
+            ios: {
+                fontSize: Platform.isPad ? 28 : 24,
+            },
+            android: {
+                fontSize: Platform.isPad ? 26 : 22,
+            },
+        }),
     },
     emptyStateSubtitle: {
-        fontSize: 16,
+        fontSize: Platform.OS === 'ios' ? 16 : 14,
         textAlign: 'center',
         opacity: 0.8,
-        lineHeight: 22,
+        lineHeight: Platform.OS === 'ios' ? 22 : 20,
+        ...Platform.select({
+            ios: {
+                fontSize: Platform.isPad ? 18 : 16,
+                lineHeight: Platform.isPad ? 26 : 22,
+            },
+            android: {
+                fontSize: Platform.isPad ? 16 : 14,
+                lineHeight: Platform.isPad ? 24 : 20,
+            },
+        }),
     },
     errorMessage: {
         borderWidth: 1,
@@ -227,5 +212,136 @@ export const styles = StyleSheet.create({
         height: 50,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    newChatButton: {
+        padding: 12,
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    chatContainer: {
+        flex: 1,
+    },
+    chatContent: {
+        padding: 16,
+    },
+    emptyContentContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    messageContainer: {
+        maxWidth: '80%',
+        padding: Platform.OS === 'ios' ? 12 : 10,
+        paddingHorizontal: Platform.OS === 'ios' ? 16 : 14,
+        borderRadius: 16,
+        marginBottom: Platform.OS === 'ios' ? 16 : 12,
+        marginHorizontal: 10,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 1
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 1,
+        elevation: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        ...Platform.select({
+            ios: {
+                padding: Platform.isPad ? 14 : 12,
+                paddingHorizontal: Platform.isPad ? 18 : 16,
+                marginBottom: Platform.isPad ? 20 : 16,
+            },
+            android: {
+                padding: Platform.isPad ? 12 : 10,
+                paddingHorizontal: Platform.isPad ? 16 : 14,
+                marginBottom: Platform.isPad ? 16 : 12,
+            },
+        }),
+    },
+    userMessage: {
+        alignSelf: 'flex-end',
+        borderBottomRightRadius: 4,
+        marginLeft: 45,
+    },
+    aiMessage: {
+        alignSelf: 'flex-start',
+        borderBottomLeftRadius: 4,
+        marginRight: 45,
+    },
+    messageText: {
+        fontSize: Platform.OS === 'ios' ? 15.5 : 14.5,
+        lineHeight: Platform.OS === 'ios' ? 21 : 20,
+        flexShrink: 1,
+        ...Platform.select({
+            ios: {
+                fontSize: Platform.isPad ? 17 : 15.5,
+                lineHeight: Platform.isPad ? 24 : 21,
+            },
+            android: {
+                fontSize: Platform.isPad ? 16 : 14.5,
+                lineHeight: Platform.isPad ? 22 : 20,
+            },
+        }),
+    },
+    inputContainer: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        flexDirection: 'row',
+        padding: Platform.OS === 'ios' ? 16 : 12,
+        alignItems: 'center',
+        ...Platform.select({
+            ios: {
+                padding: Platform.isPad ? 20 : 16,
+            },
+            android: {
+                padding: Platform.isPad ? 16 : 12,
+            },
+        }),
+    },
+    input: {
+        flex: 1,
+        borderRadius: 20,
+        padding: Platform.OS === 'ios' ? 12 : 10,
+        marginRight: 8,
+        maxHeight: Platform.OS === 'ios' ? 100 : 80,
+        minHeight: Platform.OS === 'ios' ? 40 : 36,
+        fontSize: Platform.OS === 'ios' ? 16 : 14,
+        ...Platform.select({
+            ios: {
+                padding: Platform.isPad ? 14 : 12,
+                fontSize: Platform.isPad ? 18 : 16,
+                maxHeight: Platform.isPad ? 120 : 100,
+                minHeight: Platform.isPad ? 44 : 40,
+            },
+            android: {
+                padding: Platform.isPad ? 12 : 10,
+                fontSize: Platform.isPad ? 16 : 14,
+                maxHeight: Platform.isPad ? 100 : 80,
+                minHeight: Platform.isPad ? 40 : 36,
+            },
+        }),
+    },
+    sendButton: {
+        padding: 12,
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    typingIcon: {
+        width: 35,
+        height: 35,
+        marginRight: 8,
+    },
+    streamingMessage: {
+        opacity: 1,
+        transform: [{scale: 1}],
     },
 }); 

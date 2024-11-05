@@ -36,12 +36,15 @@ export const translations = {
             profile: 'Profile',
             language: 'Language'
         },
-        chantai: {
+        chatai: {
             chatHistory: 'Chat History',
-            noHistory: 'No chat history yet',
-            startConversation: 'Start a conversation with ChatAI',
+            noHistory: 'No chat history available',
+            startConversation: 'How can I help you today?',
+            emptyStateMessage: 'Feel free to ask me anything, I\'m here to help!',
             typePlaceholder: 'Type a message...',
             aiResponse: 'This is a simulated AI response.',
+            selectLanguage: 'Select Language',
+            typing: 'ChatAI is typing...'
         }
     },
     ar: {
@@ -81,12 +84,15 @@ export const translations = {
             profile: 'الملف الشخصي',
             language: 'اللغة'
         },
-        chantai: {
+        chatai: {
             chatHistory: 'سجل المحادثة',
-            noHistory: 'لا يوجد سجل محادثة بعد',
-            startConversation: 'ابدأ محادثة مع ChatAI',
+            noHistory: 'لا يوجد سجل محادثة',
+            startConversation: 'كيف يمكنني مساعدتك اليوم؟',
+            emptyStateMessage: 'لا تتردد في سؤالي عن أي شيء، أنا هنا للمساعدة!',
             typePlaceholder: 'اكتب رسالة...',
-            aiResponse: 'هذا رد محاكاة للذكاء الاصطناعي.',
+            aiResponse: 'هذا رد محاكاة للذكاء الاصطناعي',
+            selectLanguage: 'اختر اللغة',
+            typing: ' يكتب...'
         }
     },
     ckb: {
@@ -126,12 +132,15 @@ export const translations = {
             profile: 'پرۆفایل',
             language: 'زمان'
         },
-        chantai: {
+        chatai: {
             chatHistory: 'مێژووی چات',
-            noHistory: 'هیچ مێژوویەکی چات نییە',
-            startConversation: 'دەستپێکردنی گفتوگۆ لەگەڵ ChatAI',
+            noHistory: 'هیچ مێژوویەکی چات بەردەست نییە',
+            startConversation: 'ئەمڕۆ چۆن دەتوانم یارمەتیت بدەم؟',
+            emptyStateMessage: 'بە ئازادی هەر پرسیارێکت هەیە بیکە، من لێرەم بۆ یارمەتیدان!',
             typePlaceholder: 'نامەیەک بنووسە...',
-            aiResponse: 'ئەمە وەڵامێکی خەیاڵی هۆشی دەستکردە.',
+            aiResponse: 'ئەمە وەڵامێکی خەیاڵی هۆشی دەستکردە',
+            selectLanguage: 'زمان هەڵبژێرە',
+            typing: 'دەنووسێت...'
         }
     }
 }; 

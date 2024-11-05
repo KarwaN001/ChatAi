@@ -11,6 +11,7 @@ import {
     TextInput,
     View,
     StyleSheet,
+    Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../DarkMode/ThemeContext';
@@ -18,6 +19,8 @@ import { useLanguage } from '../DarkMode/LanguageContext';
 import { translations } from '../translations';
 import axios from 'axios';
 import { styles } from '../styles/ChatAiStyles';
+import AiLogo from '../assets/Ai_logo.png';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const ChatAi = () => {
     const {theme, toggleTheme} = useTheme();
@@ -39,7 +42,7 @@ export const ChatAi = () => {
     const slideAnim = useRef(new Animated.Value(50)).current;
     const messageAnimations = useRef({}).current;
 
-    const t = translations[currentLanguage].chantai;
+    const t = translations[currentLanguage]?.chatai || translations.en.chatai;
 
     const languages = [
         {
@@ -166,28 +169,33 @@ export const ChatAi = () => {
         }
     };
 
+    const [streamedText, setStreamedText] = useState('');
+    const [isStreaming, setIsStreaming] = useState(false);
+
     const sendMessage = async () => {
         if (inputText.trim() && !isWaitingForResponse) {
             setIsWaitingForResponse(true);
             startSpinAnimation();
 
             try {
-                const translatedMessage = await translate('ckb', 'en', inputText);
+                const translatedMessage = await translate(currentLanguage, 'en', inputText);
 
                 const newMessage = {
                     id: Date.now().toString(),
                     text: inputText,
-                    isUser: true
+                    isUser: true,
+                    timestamp: new Date(),
+                    language: currentLanguage
                 };
-                setMessages(prev => [
-                    ...prev,
-                    newMessage
-                ]);
+                
+                const updatedMessages = [...messages, newMessage];
+                setMessages(updatedMessages);
+                await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedMessages));
+                
                 animateNewMessage(newMessage.id);
                 setInputText('');
                 setIsTyping(true);
 
-                // Send the message to the chat API
                 const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
                     "messages": [{"role": "user", "content": translatedMessage}],
                     "model": "llama3-70b-8192",
@@ -203,31 +211,39 @@ export const ChatAi = () => {
                     }
                 });
 
-
-                console.log(response.data.choices[0].message.content)
                 const aiResponseText = response.data.choices[0].message.content;
-                const translatedBack = await translate('en', 'ckb', aiResponseText);
+                const translatedBack = await translate('en', currentLanguage, aiResponseText);
 
-                console.log(translatedBack);
+                setIsTyping(false);
+                setIsStreaming(true);
 
-                // Updating messages in a transition to avoid UI suspension warning
-                setTimeout(() => {
-                    setIsTyping(false);
+                const words = translatedBack.split(' ');
+                let currentText = '';
 
-                    const aiResponse = {
-                        id: (Date.now() + 1).toString(),
-                        text: translatedBack,
-                        isUser: false
-                    };
-                    setMessages(prev => [
-                        ...prev,
-                        aiResponse
-                    ]);
-                    animateNewMessage(aiResponse.id);
-                    scrollToLatest();
-                    setIsWaitingForResponse(false);
-                    spinAnimation.stopAnimation();
-                }, 2000);
+                for (let i = 0; i < words.length; i++) {
+                    await new Promise(resolve => setTimeout(resolve, 50)); // Adjust speed as needed
+                    currentText += (i === 0 ? '' : ' ') + words[i];
+                    setStreamedText(currentText);
+                }
+
+                const aiResponse = {
+                    id: (Date.now() + 1).toString(),
+                    text: translatedBack,
+                    isUser: false,
+                    timestamp: new Date(),
+                    language: currentLanguage
+                };
+
+                const finalMessages = [...updatedMessages, aiResponse];
+                setMessages(finalMessages);
+                await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(finalMessages));
+                
+                animateNewMessage(aiResponse.id);
+                scrollToLatest();
+                setIsWaitingForResponse(false);
+                setIsStreaming(false);
+                setStreamedText('');
+                spinAnimation.stopAnimation();
 
             } catch (error) {
                 console.error("Chat API error:", error);
@@ -237,7 +253,6 @@ export const ChatAi = () => {
         }
     };
 
-    // Add handler for Enter key
     const handleKeyPress = ({nativeEvent}) => {
         if (nativeEvent.key === 'Enter' && !nativeEvent.shiftKey) {
             sendMessage();
@@ -252,58 +267,68 @@ export const ChatAi = () => {
                 scale: new Animated.Value(0.9),
                 opacity: new Animated.Value(0)
             };
-
-            Animated.parallel([
-                Animated.spring(messageAnimations[messageId].scale, {
-                    toValue: 1,
-                    useNativeDriver: true,
-                    tension: 100,
-                    friction: 8
-                }),
-                Animated.timing(messageAnimations[messageId].opacity, {
-                    toValue: 1,
-                    duration: 200,
-                    useNativeDriver: true
-                })
-            ]).start();
         }
+
+        Animated.parallel([
+            Animated.spring(messageAnimations[messageId].scale, {
+                toValue: 1,
+                useNativeDriver: true,
+                tension: 100,
+                friction: 8
+            }),
+            Animated.timing(messageAnimations[messageId].opacity, {
+                toValue: 1,
+                duration: 200,
+                useNativeDriver: true
+            })
+        ]).start();
     };
 
-    const renderMessage = (message) => (<Animated.View
-        key={message.id}
-        style={[
-            styles.messageContainer,
-            message.isUser ? styles.userMessage : styles.aiMessage,
-            message.isError && styles.errorMessage,
-            {
-                backgroundColor: isLightTheme ? 
-                    (message.isUser ? '#FF9933' : message.isError ? '#ffebee' : '#f5f5f5') 
-                    : 
-                    (message.isUser ? '#FFB84D' : message.isError ? '#b71c1c' : '#2A2A2A'),
-                opacity: messageAnimations[message.id]?.opacity || 0,
-                transform: [
+    const renderMessage = (message) => {
+        if (!messageAnimations[message.id]) {
+            messageAnimations[message.id] = {
+                scale: new Animated.Value(1),
+                opacity: new Animated.Value(1)
+            };
+        }
+
+        return (
+            <Animated.View
+                key={message.id}
+                style={[
+                    styles.messageContainer,
+                    message.isUser ? styles.userMessage : styles.aiMessage,
+                    message.isError && styles.errorMessage,
                     {
-                        scale: messageAnimations[message.id]?.scale || 0.9
+                        backgroundColor: isLightTheme ? 
+                            (message.isUser ? '#FF9933' : message.isError ? '#ffebee' : '#f5f5f5') 
+                            : 
+                            (message.isUser ? '#FFB84D' : message.isError ? '#b71c1c' : '#2A2A2A'),
+                        opacity: messageAnimations[message.id].opacity,
+                        transform: [{
+                            scale: messageAnimations[message.id].scale
+                        }]
                     }
-                ]
-            }
-        ]}
-    >
-        {!message.isUser && (<Icon
-            name={message.isError ? "alert-circle" : "robot"}
-            size={20}
-            color={isLightTheme ? '#FF9933' : '#FFB84D'}
-            style={styles.messageIcon}
-        />)}
-        <Text style={[
-            styles.messageText,
-            {
-                color: message.isUser ? '#fff' : (isLightTheme ? '#000' : '#fff')
-            }
-        ]}>
-            {message.text}
-        </Text>
-    </Animated.View>);
+                ]}
+            >
+                {!message.isUser && (
+                    <Image
+                        source={AiLogo}
+                        style={[styles.messageIcon, { width: 30, height: 30 }]}
+                        resizeMode="contain"
+                    />
+                )}
+                <Text style={[
+                    styles.messageText,
+                    {
+                        color: message.isUser ? '#fff' : (isLightTheme ? '#000' : '#fff')
+                    }
+                ]}>
+                    {message.text}
+                </Text>
+            </Animated.View>
+        );
+    };
 
     const typingAnim = useRef(new Animated.Value(0)).current;
 
@@ -329,21 +354,16 @@ export const ChatAi = () => {
         }
     }, [isTyping]);
 
-    // Add new animation value for theme toggle
     const themeToggleAnim = useRef(new Animated.Value(theme === 'light' ? 0 : 1)).current;
     const themeIconScale = useRef(new Animated.Value(1)).current;
 
-    // Add effect to animate theme changes
     useEffect(() => {
-        // Sequence of animations
         Animated.sequence([
-            // First scale down
             Animated.timing(themeIconScale, {
                 toValue: 0.7,
                 duration: 150,
                 useNativeDriver: true,
             }),
-            // Then rotate and scale up
             Animated.parallel([
                 Animated.timing(themeToggleAnim, {
                     toValue: theme === 'light' ? 0 : 1,
@@ -359,18 +379,65 @@ export const ChatAi = () => {
         ]).start();
     }, [theme]);
 
+    const STORAGE_KEY = 'chat_messages';
+
+    useEffect(() => {
+        const loadInitialMessages = async () => {
+            try {
+                const savedMessages = await AsyncStorage.getItem(STORAGE_KEY);
+                if (savedMessages) {
+                    const parsedMessages = JSON.parse(savedMessages);
+                    parsedMessages.forEach(message => {
+                        messageAnimations[message.id] = {
+                            scale: new Animated.Value(1),
+                            opacity: new Animated.Value(1)
+                        };
+                    });
+                    setMessages(parsedMessages);
+                }
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        };
+        loadInitialMessages();
+    }, []);
+
+    useEffect(() => {
+        const saveMessages = async () => {
+            if (messages.length > 0) {
+                try {
+                    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+                } catch (error) {
+                    console.error('Error saving messages:', error);
+                }
+            }
+        };
+        saveMessages();
+    }, [messages]);
+
+    const startNewChat = async () => {
+        try {
+            await AsyncStorage.removeItem(STORAGE_KEY);
+            setMessages([]);
+            setInputText('');
+            setIsTyping(false);
+            setIsWaitingForResponse(false);
+        } catch (error) {
+            console.error('Error clearing messages:', error);
+        }
+    };
+
     return (<View style={[
         styles.container,
         {backgroundColor: isLightTheme ? '#fff' : '#1A1A1A'}
     ]}>
-        {/* Header - Modified */}
         <View style={[
             styles.header,
             {backgroundColor: isLightTheme ? '#fff' : '#1A1A1A'}
         ]}>
-            <Pressable onPress={toggleHistory} style={styles.menuButton}>
+            <Pressable onPress={toggleLanguageModal} style={styles.menuButton}>
                 <Icon
-                    name="menu"
+                    name="translate"
                     size={24}
                     color={isLightTheme ? '#FF9933' : '#FFB84D'}
                 />
@@ -382,7 +449,6 @@ export const ChatAi = () => {
                 ChatAI
             </Text>
             
-            {/* Add Theme Toggle Button */}
             <Pressable 
                 onPress={toggleTheme}
                 style={styles.themeToggle}
@@ -416,7 +482,6 @@ export const ChatAi = () => {
             </Pressable>
         </View>
 
-        {/* Chat Container */}
         <ScrollView
             ref={scrollViewRef}
             style={styles.chatContainer}
@@ -428,85 +493,126 @@ export const ChatAi = () => {
             showsVerticalScrollIndicator={false}
         >
             {messages.length === 0 ? (<View style={styles.emptyStateContainer}>
-                <Icon
-                    name="robot"
-                    size={80}
-                    color={isLightTheme ? '#FF9933' : '#FFB84D'}
+                <Image 
+                    source={AiLogo}
                     style={styles.emptyStateIcon}
+                    resizeMode="contain"
                 />
                 <Text style={[
                     styles.emptyStateTitle,
-                    {color: isLightTheme ? '#000' : '#fff'}
+                    {color: isLightTheme ? '#FF9933' : '#FFB84D'}
                 ]}>
-                    How can I help you today?
+                    {t.startConversation}
                 </Text>
                 <Text style={[
                     styles.emptyStateSubtitle,
-                    {color: isLightTheme ? '#666' : '#aaa'}
+                    {color: isLightTheme ? '#FF9933' : '#FFB84D'}
                 ]}>
-                    Ask me anything about your health records or medical questions
+                    {t.emptyStateMessage}
                 </Text>
             </View>) : (<>
                 {messages.map(renderMessage)}
-                {isTyping && (<Animated.View
-                    style={[
-                        styles.typingIndicator,
-                        {
-                            backgroundColor: isLightTheme ? '#f5f5f5' : '#2A2A2A',
-                            opacity: typingAnim.interpolate({
-                                inputRange: [0, 0.5, 1],
-                                outputRange: [0.4, 1, 0.4]
-                            })
-                        }
-                    ]}
-                >
-                    <Icon
-                        name="robot"
-                        size={18}
-                        color={isLightTheme ? '#FF9933' : '#FFB84D'}
-                        style={styles.messageIcon}
-                    />
-                    <View style={{flex: 1}}>
-                        <Text style={{
-                            color: isLightTheme ? '#666' : '#aaa',
-                            fontSize: 14,
-                            flexShrink: 1
-                        }}>
-                            ChatAi typing
-                            <Animated.Text style={{
+                {isTyping && (
+                    <Animated.View
+                        style={[
+                            styles.typingIndicator,
+                            {
+                                backgroundColor: isLightTheme ? '#f5f5f5' : '#2A2A2A',
                                 opacity: typingAnim.interpolate({
                                     inputRange: [0, 0.5, 1],
-                                    outputRange: [0, 1, 0]
+                                    outputRange: [0.4, 1, 0.4]
                                 })
-                            }}>...</Animated.Text>
+                            }
+                        ]}
+                    >
+                        <Image
+                            source={AiLogo}
+                            style={[styles.typingIcon, { width: 35, height: 35 }]}
+                            resizeMode="contain"
+                        />
+                        <View style={{flex: 1}}>
+                            <Text style={{
+                                color: isLightTheme ? '#666' : '#aaa',
+                                fontSize: 14,
+                                flexShrink: 1
+                            }}>
+                                {t.typing}
+                                <Animated.Text style={{
+                                    opacity: typingAnim.interpolate({
+                                        inputRange: [0, 0.5, 1],
+                                        outputRange: [0, 1, 0]
+                                    })
+                                }}>...</Animated.Text>
+                            </Text>
+                        </View>
+                    </Animated.View>
+                )}
+                {isStreaming && (
+                    <Animated.View
+                        style={[
+                            styles.messageContainer,
+                            styles.aiMessage,
+                            {
+                                backgroundColor: isLightTheme ? '#f5f5f5' : '#2A2A2A',
+                                opacity: 1,
+                            }
+                        ]}
+                    >
+                        <Image
+                            source={AiLogo}
+                            style={[styles.messageIcon, { width: 30, height: 30 }]}
+                            resizeMode="contain"
+                        />
+                        <Text style={[
+                            styles.messageText,
+                            {
+                                color: isLightTheme ? '#000' : '#fff'
+                            }
+                        ]}>
+                            {streamedText}
                         </Text>
-                    </View>
-                </Animated.View>)}
+                    </Animated.View>
+                )}
             </>)}
         </ScrollView>
 
-        {/* Input Container - Updated positioning */}
         <View style={[
             styles.inputContainer,
             {
                 backgroundColor: isLightTheme ? '#fff' : '#1A1A1A',
             }
         ]}>
+            <Pressable
+                onPress={startNewChat}
+                style={[
+                    styles.newChatButton,
+                    {
+                        backgroundColor: isLightTheme ? '#f5f5f5' : '#2A2A2A',
+                        marginRight: 8,
+                    }
+                ]}
+            >
+                <Icon
+                    name="message-plus"
+                    size={24}
+                    color={isLightTheme ? '#FF9933' : '#FFB84D'}
+                />
+            </Pressable>
             <TextInput
                 style={[
                     styles.input,
                     {
                         backgroundColor: isLightTheme ? '#f5f5f5' : '#2A2A2A',
                         color: isLightTheme ? '#000' : '#fff',
-                        opacity: isWaitingForResponse ? 0.5 : 1 // Show disabled state
+                        opacity: isWaitingForResponse ? 0.5 : 1
                     }
                 ]}
-                placeholder="Type a message..."
+                placeholder={t.typePlaceholder}
                 placeholderTextColor={isLightTheme ? '#666' : '#aaa'}
                 value={inputText}
                 onChangeText={setInputText}
                 multiline
-                editable={!isWaitingForResponse} // Disable input while waiting
+                editable={!isWaitingForResponse}
             />
             <Pressable
                 onPress={sendMessage}
@@ -519,60 +625,32 @@ export const ChatAi = () => {
                     }
                 ]}
             >
-                {isWaitingForResponse ? (<Animated.View
-                    style={{
-                        transform: [
-                            {
+                {isWaitingForResponse ? (
+                    <Animated.View
+                        style={{
+                            transform: [{
                                 rotate: spinAnimation.interpolate({
                                     inputRange: [0, 1],
-                                    outputRange: [
-                                        '0deg',
-                                        '360deg'
-                                    ]
+                                    outputRange: ['0deg', '360deg']
                                 })
-                            }
-                        ]
-                    }}
-                >
+                            }]
+                        }}
+                    >
+                        <Icon
+                            name="loading"
+                            size={24}
+                            color={isLightTheme ? '#FF9933' : '#FFB84D'}
+                        />
+                    </Animated.View>
+                ) : (
                     <Icon
-                        name="loading"
+                        name="send"
                         size={24}
                         color={isLightTheme ? '#FF9933' : '#FFB84D'}
                     />
-                </Animated.View>) : (<Icon
-                    name="send"
-                    size={24}
-                    color={isLightTheme ? '#FF9933' : '#FFB84D'}
-                />)}
+                )}
             </Pressable>
         </View>
-
-        {/* Modals */}
-        <Modal
-            visible={isHistoryVisible}
-            animationType="slide"
-            transparent={true}
-            onRequestClose={toggleHistory}
-        >
-            <Pressable style={styles.modalOverlay} onPress={toggleHistory}>
-                <View style={[
-                    styles.historyModal,
-                    {backgroundColor: isLightTheme ? '#fff' : '#2A2A2A'}
-                ]}>
-                    <Text style={[
-                        styles.historyTitle,
-                        {color: isLightTheme ? '#1a73e8' : '#64B5F6'}
-                    ]}>
-                        {t.chatHistory}
-                    </Text>
-                    <ScrollView>
-                        <Text style={{color: isLightTheme ? '#666' : '#aaa'}}>
-                            {t.noHistory}
-                        </Text>
-                    </ScrollView>
-                </View>
-            </Pressable>
-        </Modal>
 
         <Modal
             visible={isLanguageModalVisible}
@@ -583,30 +661,64 @@ export const ChatAi = () => {
             <Pressable style={styles.modalOverlay} onPress={toggleLanguageModal}>
                 <View style={[
                     styles.languageModal,
-                    {backgroundColor: isLightTheme ? '#fff' : '#2A2A2A'}
+                    {
+                        backgroundColor: isLightTheme ? '#fff' : '#2A2A2A',
+                        borderRadius: 20,
+                        width: '80%',
+                    }
                 ]}>
-                    {languages.map((language) => (<Pressable
-                        key={language.code}
-                        style={[
-                            styles.languageItem,
-                            {backgroundColor: isLightTheme ? '#fff' : '#2A2A2A'}
-                        ]}
-                        onPress={() => handleLanguageChange(language.code)}
-                    >
+                    <View style={styles.modalHeader}>
                         <Text style={[
-                            styles.languageName,
-                            {color: isLightTheme ? '#000' : '#fff'}
+                            styles.modalTitle,
+                            {color: isLightTheme ? '#FF9933' : '#FFB84D'}
                         ]}>
-                            {language.name}
+                            {translations[currentLanguage]?.chatai?.selectLanguage || 'Select Language'}
                         </Text>
-                        <Text style={[
-                            styles.nativeName,
-                            {color: isLightTheme ? '#666' : '#aaa'}
-                        ]}>
-                            {language.nativeName}
-                        </Text>
-                        {currentLanguage === language.code && (<Icon name="check" size={24} color="#1a73e8"/>)}
-                    </Pressable>))}
+                        <Pressable onPress={toggleLanguageModal}>
+                            <Icon 
+                                name="close" 
+                                size={24} 
+                                color={isLightTheme ? '#FF9933' : '#FFB84D'}
+                            />
+                        </Pressable>
+                    </View>
+                    
+                    {languages.map((language) => (
+                        <Pressable
+                            key={language.code}
+                            style={[
+                                styles.languageItem,
+                                {
+                                    backgroundColor: isLightTheme ? '#fff' : '#2A2A2A',
+                                    borderBottomColor: isLightTheme ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'
+                                },
+                                currentLanguage === language.code && styles.selectedLanguageItem
+                            ]}
+                            onPress={() => handleLanguageChange(language.code)}
+                        >
+                            <View style={styles.languageItemContent}>
+                                <Text style={[
+                                    styles.languageName,
+                                    {color: isLightTheme ? '#000' : '#fff'}
+                                ]}>
+                                    {language.name}
+                                </Text>
+                                <Text style={[
+                                    styles.nativeName,
+                                    {color: isLightTheme ? '#666' : '#aaa'}
+                                ]}>
+                                    {language.nativeName}
+                                </Text>
+                            </View>
+                            {currentLanguage === language.code && (
+                                <Icon 
+                                    name="check-circle" 
+                                    size={24} 
+                                    color={isLightTheme ? '#FF9933' : '#FFB84D'}
+                                />
+                            )}
+                        </Pressable>
+                    ))}
                 </View>
             </Pressable>
         </Modal>
