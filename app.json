@@ -4,24 +4,31 @@
     "slug": "Chat_Ai",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/Ai_logo.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/Ai_logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "icon": "./assets/Ai_logo.png"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/Ai_logo.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.karwan.chatai"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/Ai_logo.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "54cc8f39-94ce-4278-ab02-a2893d0f338b"
+      }
     }
   }
 }
